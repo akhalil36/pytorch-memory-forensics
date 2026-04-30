@@ -1,0 +1,282 @@
+[2026-04-29T20:59:17.341Z] @devcontainers/cli 0.86.0. Node.js v25.8.0. darwin 25.3.0 arm64.
+[2026-04-29T20:59:17.827Z] Start: Run: docker buildx build --load --build-arg BUILDKIT_INLINE_CACHE=1 -f /var/folders/b2/gl590dk979s2l3yqx50n9zbr0000gn/T/devcontainercli/container-features/0.86.0-1777496357826/Dockerfile-with-features -t vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c --target dev_containers_target_stage --build-arg _DEV_CONTAINERS_BASE_IMAGE=dev_container_auto_added_stage_label /Users/ark63/cyfi/CyFI
+[2026-04-29T20:59:18.240Z] #0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile-with-features
+
+[2026-04-29T20:59:18.240Z] #1 transferring dockerfile: 667B done
+#1 WARN: FromPlatformFlagConstDisallowed: FROM --platform flag should not use constant value "linux/amd64" (line 3)
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.12
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [dev_container_auto_added_stage_label 1/5] FROM docker.io/library/python:3.12@sha256:5b5e75c01e04932ad3ad874ca870c74664760a02f94bca7817a3eeb662bb7c25
+#4 resolve docker.io/library/python:3.12@sha256:5b5e75c01e04932ad3ad874ca870c74664760a02f94bca7817a3eeb662bb7c25 done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.25kB done
+#5 DONE 0.0s
+
+#6 [dev_container_auto_added_stage_label 2/5] RUN apt-get update && apt-get install -y     cmake     g++     gdb     wget     unzip
+#6 CACHED
+
+#7 [dev_container_auto_added_stage_label 3/5] WORKDIR /app
+#7 CACHED
+
+#8 [dev_container_auto_added_stage_label 4/5] COPY . .
+
+[2026-04-29T20:59:18.620Z] #8 DONE 0.5s
+
+[2026-04-29T20:59:18.771Z] 
+#9 [dev_container_auto_added_stage_label 5/5] RUN pip install --no-cache-dir torch torchvision
+
+[2026-04-29T20:59:20.022Z] #9 1.403 Collecting torch
+
+[2026-04-29T20:59:20.231Z] #9 1.460   Downloading torch-2.11.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (29 kB)
+
+[2026-04-29T20:59:20.310Z] #9 1.690 Collecting torchvision
+
+[2026-04-29T20:59:20.469Z] #9 1.712   Downloading torchvision-0.26.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (5.5 kB)
+#9 1.746 Collecting filelock (from torch)
+#9 1.789   Downloading filelock-3.29.0-py3-none-any.whl.metadata (2.0 kB)
+#9 1.849 Collecting typing-extensions>=4.10.0 (from torch)
+
+[2026-04-29T20:59:20.616Z] #9 1.860   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+#9 1.996 Collecting setuptools<82 (from torch)
+
+[2026-04-29T20:59:20.787Z] #9 2.040   Downloading setuptools-81.0.0-py3-none-any.whl.metadata (6.6 kB)
+#9 2.168 Collecting sympy>=1.13.3 (from torch)
+
+[2026-04-29T20:59:20.896Z] #9 2.186   Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+#9 2.223 Collecting networkx>=2.5.1 (from torch)
+#9 2.247   Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+#9 2.277 Collecting jinja2 (from torch)
+
+[2026-04-29T20:59:21.046Z] #9 2.290   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+#9 2.324 Collecting fsspec>=0.8.5 (from torch)
+#9 2.347   Downloading fsspec-2026.4.0-py3-none-any.whl.metadata (10 kB)
+#9 2.426 Collecting cuda-toolkit==13.0.2 (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+
+[2026-04-29T20:59:21.186Z] #9 2.457   Downloading cuda_toolkit-13.0.2-py2.py3-none-any.whl.metadata (9.4 kB)
+#9 2.506 Collecting cuda-bindings<14,>=13.0.3 (from torch)
+#9 2.525   Downloading cuda_bindings-13.2.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+#9 2.566 Collecting nvidia-cudnn-cu13==9.19.0.56 (from torch)
+
+[2026-04-29T20:59:21.307Z] #9 2.687   Downloading nvidia_cudnn_cu13-9.19.0.56-py3-none-manylinux_2_27_x86_64.whl.metadata (1.9 kB)
+
+[2026-04-29T20:59:21.421Z] #9 2.737 Collecting nvidia-cusparselt-cu13==0.8.0 (from torch)
+#9 2.758   Downloading nvidia_cusparselt_cu13-0.8.0-py3-none-manylinux2014_x86_64.whl.metadata (12 kB)
+#9 2.801 Collecting nvidia-nccl-cu13==2.28.9 (from torch)
+
+[2026-04-29T20:59:21.537Z] #9 2.812   Downloading nvidia_nccl_cu13-2.28.9-py3-none-manylinux_2_18_x86_64.whl.metadata (2.0 kB)
+#9 2.850 Collecting nvidia-nvshmem-cu13==3.4.5 (from torch)
+#9 2.873   Downloading nvidia_nvshmem_cu13-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.1 kB)
+#9 2.898 Collecting triton==3.6.0 (from torch)
+#9 2.918   Downloading triton-3.6.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.7 kB)
+
+[2026-04-29T20:59:21.643Z] #9 2.978 Collecting nvidia-cublas==13.1.0.3.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 2.990   Downloading nvidia_cublas-13.1.0.3-py3-none-manylinux_2_27_x86_64.whl.metadata (1.7 kB)
+#9 3.012 Collecting nvidia-cuda-runtime==13.0.96.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.024   Downloading nvidia_cuda_runtime-13.0.96-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+
+[2026-04-29T20:59:21.838Z] #9 3.052 Collecting nvidia-cufft==12.0.0.61.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.068   Downloading nvidia_cufft-12.0.0.61-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+#9 3.113 Collecting nvidia-cufile==1.15.1.6.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.218   Downloading nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+
+[2026-04-29T20:59:21.968Z] #9 3.263 Collecting nvidia-cuda-cupti==13.0.85.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.290   Downloading nvidia_cuda_cupti-13.0.85-py3-none-manylinux_2_25_x86_64.whl.metadata (1.7 kB)
+#9 3.314 Collecting nvidia-curand==10.4.0.35.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.349   Downloading nvidia_curand-10.4.0.35-py3-none-manylinux_2_27_x86_64.whl.metadata (1.7 kB)
+
+[2026-04-29T20:59:22.112Z] #9 3.406 Collecting nvidia-cusolver==12.0.4.66.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.430   Downloading nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_x86_64.whl.metadata (1.8 kB)
+#9 3.493 Collecting nvidia-cusparse==12.6.3.3.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+
+[2026-04-29T20:59:22.215Z] #9 3.513   Downloading nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+#9 3.547 Collecting nvidia-nvjitlink==13.0.88.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.596   Downloading nvidia_nvjitlink-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+
+[2026-04-29T20:59:22.377Z] #9 3.645 Collecting nvidia-cuda-nvrtc==13.0.88.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.757   Downloading nvidia_cuda_nvrtc-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+
+[2026-04-29T20:59:22.624Z] #9 3.828 Collecting nvidia-nvtx==13.0.85.* (from cuda-toolkit[cublas,cudart,cufft,cufile,cupti,curand,cusolver,cusparse,nvjitlink,nvrtc,nvtx]==13.0.2; platform_system == "Linux"->torch)
+#9 3.854   Downloading nvidia_nvtx-13.0.85-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl.metadata (1.8 kB)
+
+[2026-04-29T20:59:22.697Z] #9 4.077 Collecting numpy (from torchvision)
+
+[2026-04-29T20:59:22.855Z] #9 4.096   Downloading numpy-2.4.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+#9 4.236 Collecting pillow!=8.3.*,>=5.3.0 (from torchvision)
+
+[2026-04-29T20:59:22.959Z] #9 4.287   Downloading pillow-12.2.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+#9 4.316 Collecting cuda-pathfinder~=1.1 (from cuda-bindings<14,>=13.0.3->torch)
+#9 4.338   Downloading cuda_pathfinder-1.5.4-py3-none-any.whl.metadata (1.9 kB)
+
+[2026-04-29T20:59:23.061Z] #9 4.365 Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch)
+#9 4.379   Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+#9 4.424 Collecting MarkupSafe>=2.0 (from jinja2->torch)
+#9 4.442   Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+
+[2026-04-29T20:59:23.235Z] #9 4.462 Downloading torch-2.11.0-cp312-cp312-manylinux_2_28_x86_64.whl (530.7 MB)
+
+[2026-04-29T20:59:47.756Z] #9 29.14    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 530.7/530.7 MB 23.1 MB/s eta 0:00:00
+[2026-04-29T20:59:47.935Z] 
+#9 29.15 Downloading cuda_toolkit-13.0.2-py2.py3-none-any.whl (2.4 kB)
+#9 29.16 Downloading nvidia_cudnn_cu13-9.19.0.56-py3-none-manylinux_2_27_x86_64.whl (366.1 MB)
+
+[2026-04-29T21:00:08.765Z] #9 50.14    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 366.1/366.1 MB 17.6 MB/s eta 0:00:00
+[2026-04-29T21:00:08.946Z] 
+#9 50.17 Downloading nvidia_cusparselt_cu13-0.8.0-py3-none-manylinux2014_x86_64.whl (169.9 MB)
+
+[2026-04-29T21:00:16.793Z] #9 58.17    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 169.9/169.9 MB 21.2 MB/s eta 0:00:00
+[2026-04-29T21:00:16.910Z] 
+#9 58.29 Downloading nvidia_nccl_cu13-2.28.9-py3-none-manylinux_2_18_x86_64.whl (196.5 MB)
+
+[2026-04-29T21:00:24.814Z] #9 66.19    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 196.5/196.5 MB 24.9 MB/s eta 0:00:00
+
+[2026-04-29T21:00:24.978Z] #9 66.21 Downloading nvidia_nvshmem_cu13-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (60.4 MB)
+
+[2026-04-29T21:00:28.163Z] #9 69.54    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.4/60.4 MB 18.1 MB/s eta 0:00:00
+[2026-04-29T21:00:28.352Z] 
+#9 69.58 Downloading triton-3.6.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (188.3 MB)
+
+[2026-04-29T21:00:37.903Z] #9 79.28    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.3/188.3 MB 19.4 MB/s eta 0:00:00
+[2026-04-29T21:00:38.090Z] 
+#9 79.32 Downloading nvidia_cublas-13.1.0.3-py3-none-manylinux_2_27_x86_64.whl (423.1 MB)
+
+[2026-04-29T21:01:08.938Z] #9 110.3    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 423.1/423.1 MB 15.8 MB/s eta 0:00:00
+[2026-04-29T21:01:09.104Z] 
+#9 110.3 Downloading nvidia_cuda_cupti-13.0.85-py3-none-manylinux_2_25_x86_64.whl (10.7 MB)
+
+[2026-04-29T21:01:09.490Z] #9 110.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.7/10.7 MB 20.0 MB/s eta 0:00:00
+[2026-04-29T21:01:09.663Z] 
+#9 110.9 Downloading nvidia_cuda_nvrtc-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (90.2 MB)
+
+[2026-04-29T21:01:14.696Z] #9 116.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 90.2/90.2 MB 17.4 MB/s eta 0:00:00
+[2026-04-29T21:01:14.936Z] 
+#9 116.2 Downloading nvidia_cuda_runtime-13.0.96-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.2 MB)
+
+[2026-04-29T21:01:15.162Z] #9 116.5    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 5.3 MB/s eta 0:00:00
+[2026-04-29T21:01:15.332Z] 
+#9 116.6 Downloading nvidia_cufft-12.0.0.61-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (214.1 MB)
+
+[2026-04-29T21:01:26.400Z] #9 127.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 214.1/214.1 MB 19.1 MB/s eta 0:00:00
+[2026-04-29T21:01:26.619Z] 
+#9 127.8 Downloading nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.2 MB)
+#9 127.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 60.9 MB/s eta 0:00:00
+#9 127.8 Downloading nvidia_curand-10.4.0.35-py3-none-manylinux_2_27_x86_64.whl (59.5 MB)
+
+[2026-04-29T21:01:29.870Z] #9 131.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 59.5/59.5 MB 17.4 MB/s eta 0:00:00
+[2026-04-29T21:01:30.103Z] 
+#9 131.3 Downloading nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_x86_64.whl (200.9 MB)
+
+[2026-04-29T21:01:38.836Z] #9 140.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200.9/200.9 MB 22.6 MB/s eta 0:00:00
+[2026-04-29T21:01:39.002Z] 
+#9 140.2 Downloading nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (145.9 MB)
+
+[2026-04-29T21:01:48.363Z] #9 149.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 145.9/145.9 MB 15.3 MB/s eta 0:00:00
+[2026-04-29T21:01:48.540Z] 
+#9 149.8 Downloading nvidia_nvjitlink-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (40.7 MB)
+
+[2026-04-29T21:01:51.470Z] #9 152.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 40.7/40.7 MB 13.2 MB/s eta 0:00:00
+[2026-04-29T21:01:51.700Z] 
+#9 152.9 Downloading nvidia_nvtx-13.0.85-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl (148 kB)
+#9 152.9 Downloading torchvision-0.26.0-cp312-cp312-manylinux_2_28_x86_64.whl (7.5 MB)
+
+[2026-04-29T21:01:51.846Z] #9 153.2    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.5/7.5 MB 25.0 MB/s eta 0:00:00
+[2026-04-29T21:01:52.011Z] 
+#9 153.2 Downloading cuda_bindings-13.2.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (6.3 MB)
+
+[2026-04-29T21:01:52.252Z] #9 153.6    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 16.1 MB/s eta 0:00:00
+[2026-04-29T21:01:52.374Z] 
+#9 153.7 Downloading fsspec-2026.4.0-py3-none-any.whl (203 kB)
+#9 153.8 Downloading networkx-3.6.1-py3-none-any.whl (2.1 MB)
+
+[2026-04-29T21:01:52.595Z] #9 153.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 33.5 MB/s eta 0:00:00
+#9 153.8 Downloading pillow-12.2.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.1 MB)
+
+[2026-04-29T21:01:52.653Z] #9 154.0    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.1/7.1 MB 33.7 MB/s eta 0:00:00
+[2026-04-29T21:01:52.870Z] 
+#9 154.0 Downloading setuptools-81.0.0-py3-none-any.whl (1.1 MB)
+#9 154.1    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.1/1.1 MB 45.2 MB/s eta 0:00:00
+#9 154.1 Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+
+[2026-04-29T21:01:53.393Z] #9 154.8    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 9.1 MB/s eta 0:00:00
+[2026-04-29T21:01:53.639Z] 
+#9 154.8 Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+#9 154.8 Downloading filelock-3.29.0-py3-none-any.whl (39 kB)
+#9 154.9 Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+#9 154.9 Downloading numpy-2.4.4-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+
+[2026-04-29T21:01:55.310Z] #9 156.7    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.6/16.6 MB 9.2 MB/s eta 0:00:00
+[2026-04-29T21:01:55.500Z] 
+#9 156.7 Downloading cuda_pathfinder-1.5.4-py3-none-any.whl (51 kB)
+#9 156.7 Downloading markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+#9 156.8 Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+#9 156.9    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 143.0 MB/s eta 0:00:00
+[2026-04-29T21:01:55.652Z] 
+
+[2026-04-29T21:02:00.050Z] #9 161.4 Installing collected packages: nvidia-cusparselt-cu13, mpmath, cuda-toolkit, typing-extensions, triton, sympy, setuptools, pillow, nvidia-nvtx, nvidia-nvshmem-cu13, nvidia-nvjitlink, nvidia-nccl-cu13, nvidia-curand, nvidia-cufile, nvidia-cuda-runtime, nvidia-cuda-nvrtc, nvidia-cuda-cupti, nvidia-cublas, numpy, networkx, MarkupSafe, fsspec, filelock, cuda-pathfinder, nvidia-cusparse, nvidia-cufft, nvidia-cudnn-cu13, jinja2, cuda-bindings, nvidia-cusolver, torch, torchvision
+
+[2026-04-29T21:02:24.203Z] #9 185.6 Successfully installed MarkupSafe-3.0.3 cuda-bindings-13.2.0 cuda-pathfinder-1.5.4 cuda-toolkit-13.0.2 filelock-3.29.0 fsspec-2026.4.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.6.1 numpy-2.4.4 nvidia-cublas-13.1.0.3 nvidia-cuda-cupti-13.0.85 nvidia-cuda-nvrtc-13.0.88 nvidia-cuda-runtime-13.0.96 nvidia-cudnn-cu13-9.19.0.56 nvidia-cufft-12.0.0.61 nvidia-cufile-1.15.1.6 nvidia-curand-10.4.0.35 nvidia-cusolver-12.0.4.66 nvidia-cusparse-12.6.3.3 nvidia-cusparselt-cu13-0.8.0 nvidia-nccl-cu13-2.28.9 nvidia-nvjitlink-13.0.88 nvidia-nvshmem-cu13-3.4.5 nvidia-nvtx-13.0.85 pillow-12.2.0 setuptools-81.0.0 sympy-1.14.0 torch-2.11.0 torchvision-0.26.0 triton-3.6.0 typing-extensions-4.15.0
+
+[2026-04-29T21:02:24.352Z] #9 185.6 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+
+[2026-04-29T21:02:24.476Z] #9 185.9 
+#9 185.9 [notice] A new release of pip is available: 25.0.1 -> 26.1
+#9 185.9 [notice] To update, run: pip install --upgrade pip
+
+[2026-04-29T21:02:24.895Z] #9 DONE 186.3s
+
+[2026-04-29T21:02:25.087Z] 
+#10 exporting to image
+
+[2026-04-29T21:02:25.087Z] #10 exporting layers
+
+[2026-04-29T21:03:44.172Z] #10 exporting layers 79.2s done
+#10 preparing layers for inline cache
+
+[2026-04-29T21:03:44.301Z] #10 preparing layers for inline cache 0.1s done
+#10 exporting manifest sha256:02c3b482aa2042deeb35142413de240e98a6253fe69e8ccfd1c8dd3e4fa7404c 0.0s done
+#10 exporting config sha256:821e9480b597d8e20e5ae16e8fc4536353413687d8a3225947898b36d5710095 0.0s done
+#10 exporting attestation manifest sha256:af7aa6e5d548236d529c9a25c84ebeb857f7c837bc6945f9b510a2ce655ddec8 0.0s done
+#10 exporting manifest list sha256:d2dd647adbb8efabf0cc46dd6af4199d197662f62ee99e57f6db2c796e6b77db
+
+[2026-04-29T21:03:44.456Z] #10 exporting manifest list sha256:d2dd647adbb8efabf0cc46dd6af4199d197662f62ee99e57f6db2c796e6b77db done
+#10 naming to docker.io/library/vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c:latest done
+#10 unpacking to docker.io/library/vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c:latest
+
+[2026-04-29T21:03:58.121Z] #10 unpacking to docker.io/library/vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c:latest 13.8s done
+
+[2026-04-29T21:03:58.226Z] #10 DONE 93.2s
+
+[2026-04-29T21:03:58.226Z] 
+ 1 warning found (use docker --debug to expand):
+ - FromPlatformFlagConstDisallowed: FROM --platform flag should not use constant value "linux/amd64" (line 3)
+
+[2026-04-29T21:03:58.243Z] Start: Run: docker run --sig-proxy=false -a STDOUT -a STDERR --mount type=bind,source=/Users/ark63/cyfi/CyFI,target=/workspaces/CyFI,consistency=cached --mount source=/Users/ark63/cyfi/CyFI, target=/app,type=bind -l devcontainer.local_folder=/Users/ark63/cyfi/CyFI -l devcontainer.config_file=/Users/ark63/cyfi/CyFI/.devcontainer/devcontainer.json --cap-add=SYS_PTRACE --security-opt=seccomp=unconfined --entrypoint /bin/sh vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c -c echo Container started
+[2026-04-29T21:03:58.659Z] invalid argument "source=/Users/ark63/cyfi/CyFI, target=/app,type=bind" for "--mount" flag: unexpected key ' target' in ' target=/app'
+
+Usage:  docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+
+Run 'docker run --help' for more information
+Error: Command failed: docker run --sig-proxy=false -a STDOUT -a STDERR --mount type=bind,source=/Users/ark63/cyfi/CyFI,target=/workspaces/CyFI,consistency=cached --mount source=/Users/ark63/cyfi/CyFI, target=/app,type=bind -l devcontainer.local_folder=/Users/ark63/cyfi/CyFI -l devcontainer.config_file=/Users/ark63/cyfi/CyFI/.devcontainer/devcontainer.json --cap-add=SYS_PTRACE --security-opt=seccomp=unconfined --entrypoint /bin/sh vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c -c echo Container started
+trap "exit 0" 15
+
+exec "$@"
+while sleep 1 & wait $!; do :; done -
+    at MV (/Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:465:1277)
+    at uG (/Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:465:1021)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async ZV (/Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:483:4649)
+    at async kI (/Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:483:5768)
+    at async MZ (/Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:664:205)
+    at async kZ (/Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:663:15080)
+    at async /Users/ark63/.npm/_npx/c5e74fa377e9cf23/node_modules/@devcontainers/cli/dist/spec-node/devContainersSpecCLI.js:483:1917
+{"outcome":"error","message":"Command failed: docker run --sig-proxy=false -a STDOUT -a STDERR --mount type=bind,source=/Users/ark63/cyfi/CyFI,target=/workspaces/CyFI,consistency=cached --mount source=/Users/ark63/cyfi/CyFI, target=/app,type=bind -l devcontainer.local_folder=/Users/ark63/cyfi/CyFI -l devcontainer.config_file=/Users/ark63/cyfi/CyFI/.devcontainer/devcontainer.json --cap-add=SYS_PTRACE --security-opt=seccomp=unconfined --entrypoint /bin/sh vsc-cyfi-d88bebcdafbe4c8a1cdd9ede404c29d261d5c2b15b5bd56dd848f241693f185c -c echo Container started\ntrap \"exit 0\" 15\n\nexec \"$@\"\nwhile sleep 1 & wait $!; do :; done -","description":"An error occurred setting up the container."}

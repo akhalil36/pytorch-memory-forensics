@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -rdynamic -Wl,--dependency-file=CMakeFiles/infer.dir/link.d CMakeFiles/infer.dir/cpp_inference/main.cpp.o -o infer  -Wl,-rpath,/app/libtorch/lib /app/libtorch/lib/libtorch.so /app/libtorch/lib/libc10.so /app/libtorch/lib/libc10.so -Wl,--no-as-needed,/app/libtorch/lib/libtorch.so -Wl,--as-needed
