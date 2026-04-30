@@ -1,0 +1,8 @@
+build/
+*.pt
+*.pth
+*.zip
+__pycache__/
+*.pyc
+libtorch/
+data/
