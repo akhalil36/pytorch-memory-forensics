@@ -6,3 +6,4 @@ data/
 .devcontainer/
 .vscode/
 devcontainer-log.txt
+libtorch-shared-with-deps-latest.zip
