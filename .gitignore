@@ -1,8 +1,8 @@
 build/
-*.pt
-*.pth
-*.zip
 __pycache__/
 *.pyc
 libtorch/
 data/
+.devcontainer/
+.vscode/
+devcontainer-log.txt
