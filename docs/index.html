@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extracting a Neural Network from RAM — Memory Forensics</title>
+<meta name="description" content="Recovering a PyTorch CNN's weights, architecture, and forward-pass code directly from a raw memory image using GDB, LiME, and a custom Volatility 3 plugin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E14;
+    --bg-raise:#11151F;
+    --bg-panel:#151A26;
+    --line:#232A3A;
+    --line-bright:#2E374A;
+    --ink:#D4D7DD;
+    --ink-dim:#8A93A6;
+    --ink-faint:#5B6577;
+    --amber:#E8B84B;
+    --amber-dim:#A8863A;
+    --cyan:#5AC8D8;
+    --cyan-dim:#3A8894;
+    --rust:#D8734B;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --display:'Space Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--display);
+    font-size:17px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--amber);color:#0B0E14}
+
+  .wrap{max-width:1000px;margin:0 auto;padding:0 28px}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:rgba(11,14,20,.82);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{max-width:1000px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:20px}
+  .brand{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+  .brand .addr{color:var(--amber)}
+  .topnav{margin-left:auto;display:flex;gap:22px}
+  .topnav a{font-family:var(--mono);font-size:12px;color:var(--ink-dim);text-decoration:none;letter-spacing:.03em;transition:color .18s}
+  .topnav a:hover{color:var(--cyan)}
+  @media(max-width:680px){.topnav{display:none}}
+
+  /* ---------- hero ---------- */
+  .hero{padding:88px 0 64px;position:relative}
+  .hero .eyebrow{
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:26px;
+  }
+  .hero h1{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(38px,6vw,68px);line-height:1.03;letter-spacing:-.02em;
+    color:#fff;margin-bottom:26px;
+  }
+  .hero h1 .thin{color:var(--ink-dim);font-weight:400}
+  .hero .lede{
+    font-size:clamp(17px,2vw,20px);color:var(--ink-dim);max-width:620px;line-height:1.6;
+  }
+  .hero .lede strong{color:var(--ink);font-weight:500}
+
+  /* recovered ledger in hero */
+  .ledger{
+    margin-top:52px;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,var(--bg-panel),var(--bg-raise));
+    border-radius:6px;overflow:hidden;
+    font-family:var(--mono);
+  }
+  .ledger-head{
+    display:flex;align-items:center;gap:8px;
+    padding:11px 16px;border-bottom:1px solid var(--line);
+    background:var(--bg-raise);
+  }
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--line-bright)}
+  .dot.live{background:var(--cyan);box-shadow:0 0 0 0 rgba(90,200,216,.5);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(90,200,216,.45)}70%{box-shadow:0 0 0 7px rgba(90,200,216,0)}100%{box-shadow:0 0 0 0 rgba(90,200,216,0)}}
+  .ledger-title{margin-left:6px;font-size:12px;color:var(--ink-faint);letter-spacing:.04em}
+  .ledger-body{padding:6px 0}
+  .lrow{
+    display:grid;grid-template-columns:180px 1fr auto;gap:16px;
+    padding:8px 18px;font-size:13px;align-items:center;
+    border-bottom:1px solid rgba(35,42,58,.45);
+  }
+  .lrow:last-child{border-bottom:none}
+  .lrow .a{color:var(--amber);white-space:nowrap}
+  .lrow .d{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .d .k{color:var(--ink-faint)}
+  .lrow .s{color:var(--cyan);font-size:11px;letter-spacing:.05em;white-space:nowrap}
+  .lrow .s::before{content:"✓ ";}
+  @media(max-width:640px){
+    .lrow{grid-template-columns:1fr;gap:3px;padding:10px 16px}
+    .lrow .a{font-size:12px}
+    .lrow .s{font-size:10px}
+  }
+
+  /* ---------- stat strip ---------- */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);
+    border-radius:6px;overflow:hidden;margin:72px 0 8px;
+  }
+  .stat{background:var(--bg-raise);padding:26px 22px}
+  .stat .n{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--amber);line-height:1;letter-spacing:-.01em}
+  .stat .l{font-family:var(--mono);font-size:11px;color:var(--ink-dim);margin-top:12px;letter-spacing:.08em;text-transform:uppercase;line-height:1.5}
+  @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- section scaffold ---------- */
+  section{padding:78px 0;border-top:1px solid var(--line)}
+  .sec-mark{
+    font-family:var(--mono);font-size:12px;color:var(--amber-dim);
+    letter-spacing:.12em;margin-bottom:14px;display:flex;align-items:center;gap:12px;
+  }
+  .sec-mark::before{content:"";width:26px;height:1px;background:var(--amber-dim)}
+  h2{
+    font-family:var(--display);font-weight:600;
+    font-size:clamp(27px,3.6vw,38px);letter-spacing:-.015em;color:#fff;
+    margin-bottom:20px;line-height:1.12;
+  }
+  .sec-lede{color:var(--ink-dim);max-width:680px;font-size:18px;margin-bottom:40px}
+  h3{
+    font-family:var(--display);font-weight:600;font-size:21px;color:var(--ink);
+    margin:44px 0 16px;letter-spacing:-.01em;
+  }
+  p{color:var(--ink-dim);margin-bottom:18px;max-width:720px}
+  p strong{color:var(--ink);font-weight:500}
+  a{color:var(--cyan);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .18s}
+  a:hover{border-color:var(--cyan-dim)}
+  code{
+    font-family:var(--mono);font-size:.88em;
+    background:var(--bg-panel);color:var(--amber);
+    padding:2px 6px;border-radius:3px;border:1px solid var(--line);
+  }
+
+  /* code block */
+  .code{
+    font-family:var(--mono);font-size:13px;line-height:1.7;
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:6px;
+    overflow-x:auto;margin:24px 0;
+  }
+  .code-head{
+    display:flex;align-items:center;gap:8px;padding:9px 15px;
+    border-bottom:1px solid var(--line);background:var(--bg-raise);
+    font-size:11.5px;color:var(--ink-faint);letter-spacing:.05em;
+  }
+  .code-head .fname{color:var(--ink-dim)}
+  .code pre{padding:16px 18px;overflow-x:auto;color:var(--ink)}
+  .code .cm{color:var(--ink-faint)}
+  .code .kw{color:var(--rust)}
+  .code .st{color:var(--cyan)}
+  .code .fn{color:var(--amber)}
+  .code .nm{color:#B8A6E8}
+
+  /* callout / note */
+  .note{
+    border-left:2px solid var(--amber);background:var(--bg-raise);
+    padding:18px 22px;margin:24px 0;border-radius:0 6px 6px 0;
+  }
+  .note p{margin:0;color:var(--ink);font-size:15.5px}
+  .note .tag{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:7px}
+
+  /* offset table */
+  .otable{
+    width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px;
+    margin:24px 0;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+  }
+  .otable th{
+    text-align:left;padding:12px 16px;background:var(--bg-raise);
+    color:var(--ink-dim);font-weight:500;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;border-bottom:1px solid var(--line);
+  }
+  .otable td{padding:11px 16px;border-bottom:1px solid rgba(35,42,58,.5);color:var(--ink)}
+  .otable tr:last-child td{border-bottom:none}
+  .otable td.addr{color:var(--amber)}
+  .otable td.val{color:var(--cyan)}
+  .otable tbody tr:hover{background:rgba(21,26,38,.6)}
+  .otable-scroll{overflow-x:auto}
+
+  /* step list */
+  .steps{list-style:none;counter-reset:s;margin:28px 0}
+  .steps li{
+    position:relative;padding:0 0 26px 58px;counter-increment:s;
+  }
+  .steps li::before{
+    content:counter(s,decimal-leading-zero);
+    position:absolute;left:0;top:-2px;
+    font-family:var(--mono);font-size:13px;color:var(--amber);
+    border:1px solid var(--line-bright);border-radius:4px;
+    width:38px;height:32px;display:flex;align-items:center;justify-content:center;
+    background:var(--bg-raise);
+  }
+  .steps li::after{
+    content:"";position:absolute;left:19px;top:32px;bottom:2px;width:1px;background:var(--line);
+  }
+  .steps li:last-child::after{display:none}
+  .steps li h4{font-family:var(--display);font-size:18px;font-weight:600;color:var(--ink);margin-bottom:6px}
+  .steps li p{margin:0;font-size:15.5px}
+
+  /* two-col */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:28px 0}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .card{
+    border:1px solid var(--line);background:var(--bg-raise);border-radius:6px;padding:24px;
+  }
+  .card h4{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+  .card p{margin:0;font-size:15px}
+
+  /* verify banner */
+  .verify{
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    border:1px solid var(--cyan-dim);border-radius:6px;
+    background:linear-gradient(90deg,rgba(90,200,216,.06),transparent);
+    padding:20px 24px;margin:28px 0;
+  }
+  .verify .badge{
+    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;
+    color:var(--cyan);border:1px solid var(--cyan-dim);border-radius:4px;padding:5px 11px;white-space:nowrap;
+  }
+  .verify p{margin:0;color:var(--ink);font-size:15px}
+  .verify code{background:var(--bg);color:var(--amber)}
+
+  /* forward graph */
+  .flow{
+    font-family:var(--mono);font-size:13px;line-height:2;
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:6px;
+    padding:22px 24px;margin:24px 0;overflow-x:auto;
+  }
+  .flow .op{color:var(--amber)}
+  .flow .arrow{color:var(--ink-faint)}
+  .flow .var{color:var(--cyan)}
+
+  /* pitfalls */
+  .pit{border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:24px 0}
+  .pit-row{display:grid;grid-template-columns:34px 1fr;gap:0;border-bottom:1px solid var(--line)}
+  .pit-row:last-child{border-bottom:none}
+  .pit-row.win{background:linear-gradient(90deg,rgba(90,200,216,.05),transparent)}
+  .pit-tick{display:flex;align-items:flex-start;justify-content:center;padding:18px 0;background:var(--bg-raise);font-family:var(--mono);font-size:14px;color:var(--rust)}
+  .pit-row.win .pit-tick{color:var(--cyan)}
+  .pit-body{padding:16px 20px}
+  .pit-body strong{color:var(--ink);font-weight:600;font-family:var(--display)}
+  .pit-body p{margin:5px 0 0;font-size:14.5px}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:56px 0 72px}
+  .foot-grid{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:24px}
+  .foot-links{display:flex;gap:26px;flex-wrap:wrap}
+  .foot-links a{font-family:var(--mono);font-size:13px;color:var(--ink-dim)}
+  .foot-links a:hover{color:var(--cyan)}
+  .foot-note{font-family:var(--mono);font-size:12px;color:var(--ink-faint);line-height:1.7}
+
+  .disc{font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-top:10px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="addr">0x5749</span>/pytorch-memory-forensics</div>
+    <nav class="topnav">
+      <a href="#gdb">GDB</a>
+      <a href="#capture">Capture</a>
+      <a href="#volatility">Volatility</a>
+      <a href="#plugin">Plugin</a>
+      <a href="#output">Output</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Memory Forensics · Machine Learning</div>
+    <h1>Rebuilding a neural network<br><span class="thin">from a raw image of RAM.</span></h1>
+    <p class="lede">Given only a memory dump of a running process — no source, no <code>.pt</code> file — this project recovers a trained PyTorch CNN's <strong>weights</strong>, <strong>layer architecture</strong>, and the <strong>code executed during its forward pass</strong>, then automates the whole recovery in a custom Volatility&nbsp;3 plugin.</p>
+
+    <div class="ledger">
+      <div class="ledger-head">
+        <span class="dot"></span><span class="dot"></span><span class="dot live"></span>
+        <span class="ledger-title">recovered from process 5749 · CIFAR-10 CNN</span>
+      </div>
+      <div class="ledger-body">
+        <div class="lrow"><span class="a">0x5555583dc970</span><span class="d">conv2d_1.weight <span class="k">[32, 3, 3, 3]</span></span><span class="s">864 floats</span></div>
+        <div class="lrow"><span class="a">0x55555842af40</span><span class="d">conv2d_2.weight <span class="k">[64, 32, 3, 3]</span></span><span class="s">18,432 floats</span></div>
+        <div class="lrow"><span class="a">0x55555843cf80</span><span class="d">conv2d_3.weight <span class="k">[128, 64, 3, 3]</span></span><span class="s">73,728 floats</span></div>
+        <div class="lrow"><span class="a">0x7fffe23ff040</span><span class="d">linear_1.weight <span class="k">[256, 2048]</span></span><span class="s">524,288 floats</span></div>
+        <div class="lrow"><span class="a">0x555558484fc0</span><span class="d">linear_2.weight <span class="k">[10, 256]</span></span><span class="s">2,560 floats</span></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">5749</div><div class="l">PID matched<br>gdb ↔ volatility</div></div>
+      <div class="stat"><div class="n">9</div><div class="l">layers<br>recovered</div></div>
+      <div class="stat"><div class="n">643K</div><div class="l">weights<br>extracted</div></div>
+      <div class="stat"><div class="n">8</div><div class="l">forward-pass<br>operators</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== OVERVIEW ===================== -->
+<section id="overview">
+  <div class="wrap">
+    <div class="sec-mark">THE PREMISE</div>
+    <h2>An attacker with a memory dump can steal the model.</h2>
+    <p class="sec-lede">Most work on model theft assumes query access to an API. This project takes the adversary's other path: physical memory. If a model is running, its full parameters and structure are sitting in RAM — and with the right offsets, they can be read straight out.</p>
+
+    <p>The pipeline runs end to end: train a custom CNN on CIFAR-10, export it to TorchScript, load it in a C++ inference binary compiled with full debug symbols, then pause execution at the forward pass and capture the machine's memory. From that single image, GDB and a custom Volatility&nbsp;3 plugin reconstruct the model layer by layer.</p>
+
+    <div class="flow">
+      <span class="var">train CNN</span> <span class="arrow">→</span> <span class="var">TorchScript .pt</span> <span class="arrow">→</span> <span class="var">C++ inference (debug build)</span> <span class="arrow">→</span> <span class="op">gdb breakpoint @ forward</span> <span class="arrow">→</span> <span class="var">LiME capture</span> <span class="arrow">→</span> <span class="op">Volatility 3 plugin</span> <span class="arrow">→</span> <span class="var">recovered model</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MODEL ===================== -->
+<section id="model">
+  <div class="wrap">
+    <div class="sec-mark">STEP · THE NETWORK</div>
+    <h2>A CNN built from scratch, trained on CIFAR-10.</h2>
+    <p class="sec-lede">No pretrained models. A three-block convolutional feature extractor feeds a two-layer classifier, trained on an 80 / 10 / 10 split.</p>
+
+    <div class="code">
+      <div class="code-head"><span class="dot" style="width:9px;height:9px"></span><span class="fname">model.py</span></div>
+<pre><span class="kw">class</span> <span class="fn">CNN</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(<span class="nm">3</span>, <span class="nm">32</span>, <span class="nm">3</span>, padding=<span class="nm">1</span>), nn.ReLU(), nn.MaxPool2d(<span class="nm">2</span>,<span class="nm">2</span>),
+            nn.Conv2d(<span class="nm">32</span>, <span class="nm">64</span>, <span class="nm">3</span>, padding=<span class="nm">1</span>), nn.ReLU(), nn.MaxPool2d(<span class="nm">2</span>,<span class="nm">2</span>),
+            nn.Conv2d(<span class="nm">64</span>, <span class="nm">128</span>, <span class="nm">3</span>, padding=<span class="nm">1</span>), nn.ReLU(), nn.MaxPool2d(<span class="nm">2</span>,<span class="nm">2</span>),
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(<span class="nm">128</span> * <span class="nm">4</span> * <span class="nm">4</span>, <span class="nm">256</span>), nn.ReLU(),
+            nn.Linear(<span class="nm">256</span>, <span class="nm">10</span>),
+        )
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        <span class="kw">return</span> x</pre>
+    </div>
+
+    <p>After training, the model is exported to TorchScript with <code>torch.jit.script</code> and loaded by a C++ program that calls <code>module.forward(inputs)</code>. The CMake build sets <code>CMAKE_BUILD_TYPE Debug</code> so every symbol survives into the binary — which is what makes the later memory archaeology possible.</p>
+  </div>
+</section>
+
+<!-- ===================== GDB ===================== -->
+<section id="gdb">
+  <div class="wrap">
+    <div class="sec-mark">STEP · GDB @ 0x5555584273f0</div>
+    <h2>Reading PyTorch's C++ internals by hand.</h2>
+    <p class="sec-lede">With a breakpoint set on the forward-pass line, the process is frozen. From here every object — the input tensor, the module, each layer's weights — is walked through raw memory using field offsets pulled straight from PyTorch's <code>TensorImpl.h</code>.</p>
+
+    <p><code>gdb info inferior</code> reports the process ID as <strong>5749</strong> — the same PID Volatility recovers later from the memory image, the first confirmation the two views line up.</p>
+
+    <h3>Decoding the input tensor</h3>
+    <p>The <code>inputs</code> IValue vector and the raw <code>input</code> tensor share the same <code>impl</code>. Dumping 32 quadwords at the implementation address and mapping them against the struct layout reveals the tensor's shape and strides:</p>
+
+    <div class="otable-scroll">
+    <table class="otable">
+      <thead><tr><th>Address</th><th>Value</th><th>Field</th></tr></thead>
+      <tbody>
+        <tr><td class="addr">0x…eddb0</td><td class="val">0x04</td><td>size_and_strides.sizes_ = 4 (N_DIM)</td></tr>
+        <tr><td class="addr">0x…eddb8</td><td class="val">0x01</td><td>sizes_[0] = 1 &nbsp;(batch)</td></tr>
+        <tr><td class="addr">0x…eddc0</td><td class="val">0x03</td><td>sizes_[1] = 3 &nbsp;(RGB channels)</td></tr>
+        <tr><td class="addr">0x…eddc8</td><td class="val">0x20</td><td>sizes_[2] = 32 (height)</td></tr>
+        <tr><td class="addr">0x…eddd0</td><td class="val">0x20</td><td>sizes_[3] = 32 (width)</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Shape <code>[1, 3, 32, 32]</code> — exactly one CIFAR-10 image. The pattern now repeats for every layer.</p>
+
+    <h3>Walking the module's slots</h3>
+    <p>Printing <code>model._ivalue_.target_->slots_</code> yields four slots: a training flag, <code>None</code>, then <code>self.features</code> at <code>0x5555583ef4d0</code> and <code>self.classifier</code> at <code>0x5555584237b0</code>. Descending into <code>features</code> exposes the individual layers; the first <code>Conv2d</code> sits at <code>0x5555583da440</code>, with its weight tensor as slot 0 and bias as slot 1.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h4>Weight tensor · 0x…dc970</h4>
+        <p>sizes_ = <code>[32, 3, 3, 3]</code><br>strides_ = <code>[27, 9, 3, 1]</code><br>→ 32 filters × 3ch × 3×3 = <strong>864 weights</strong></p>
+      </div>
+      <div class="card">
+        <h4>Class type · 0x…06b60</h4>
+        <p>length = 6<br>bytes = <code>0x6432766e6f43</code><br>→ ASCII <strong>"conv2d"</strong> (little-endian)</p>
+      </div>
+    </div>
+
+    <p>The layer's attribute strings — <code>stride</code>, <code>padding</code>, <code>dilation</code>, <code>padding_mode</code> — are recovered the same way, decoded byte-for-byte from the ClassType object. The Linear layers follow identically: <code>linear_1.weight</code> resolves to shape <code>[256, 2048]</code>, and following its StorageImpl's <code>DataPtr</code> to <code>0x7fffe23ff040</code> lands on 2,097,152 bytes of trained float data — the correct size for a [256, 2048] tensor.</p>
+
+    <div class="note">
+      <span class="tag">Key detail</span>
+      <p>The addresses had to be gathered twice. Moving between VMs relocated everything, so the entire GDB pass was repeated on the final x86_64 machine — the addresses on this page are the ones that match the captured image.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CAPTURE ===================== -->
+<section id="capture">
+  <div class="wrap">
+    <div class="sec-mark">STEP · LiME + dwarf2json</div>
+    <h2>Freezing RAM at the breakpoint.</h2>
+    <p class="sec-lede">With the process paused mid-forward-pass, a second shell loads the LiME kernel module and writes the entire system's memory to disk in a Volatility-readable format.</p>
+
+    <div class="code">
+      <div class="code-head"><span class="dot" style="width:9px;height:9px"></span><span class="fname">capture.sh</span></div>
+<pre><span class="cm"># process is paused at the forward-pass breakpoint in another shell</span>
+sudo insmod lime-*.ko path=<span class="st">$HOME/memory.lime</span> format=<span class="st">lime</span>
+
+<span class="cm"># build the kernel symbol table for this exact build</span>
+sudo ./dwarf2json linux \
+  --elf /usr/lib/debug/boot/vmlinux-<span class="st">$(uname -r)</span> \
+  --system-map /boot/System.map-<span class="st">$(uname -r)</span> \
+  &gt; ubuntu-<span class="st">$(uname -r)</span>.json</pre>
+    </div>
+
+    <p>The symbol table has to match the kernel <em>build</em>, not just its version — a mismatched architecture banner makes Volatility fail silently, which turned into the project's single biggest time sink (see the pitfalls below).</p>
+  </div>
+</section>
+
+<!-- ===================== VOLATILITY ===================== -->
+<section id="volatility">
+  <div class="wrap">
+    <div class="sec-mark">STEP · VOLATILITY 3</div>
+    <h2>Confirming the process, then the layout.</h2>
+    <p class="sec-lede">Standard plugins first establish ground truth: the process exists in the image, and its memory map matches what GDB saw. Then volshell verifies individual addresses byte-for-byte.</p>
+
+    <div class="verify">
+      <span class="badge">PID MATCH</span>
+      <p><code>linux.pslist</code> finds process <strong>5749 · infer</strong> in the image — the exact PID GDB reported before the capture.</p>
+    </div>
+
+    <p><code>linux.proc.Maps --pid 5749</code> lays out the process's virtual memory areas. The heap spans <code>0x555555585000 – 0x5555584a5000</code> — roughly 47&nbsp;MB where most of the live model tensors reside — while <code>libtorch_cpu.so</code> occupies a ~1.4&nbsp;GB range of executable code.</p>
+
+    <h3>Byte-for-byte verification in volshell</h3>
+    <p>After switching the current layer to process 5749, a small dump helper reads memory at the GDB addresses. Every value matches. The input tensor at <code>0x5555583edd70</code>, the module at <code>0x5555584273f0</code>, the conv2d weight tensor, the "conv2d" and "Linear" ClassType strings, the linear-layer float weights — all identical across the live debugger and the frozen image.</p>
+
+    <div class="code">
+      <div class="code-head"><span class="dot" style="width:9px;height:9px"></span><span class="fname">volshell</span></div>
+<pre><span class="cm"># switch layer to the target process, then read raw qwords</span>
+<span class="kw">def</span> <span class="fn">dump</span>(addr, n_qwords=<span class="nm">32</span>):
+    layer = context.layers[self.current_layer]
+    <span class="kw">for</span> i <span class="kw">in</span> range(<span class="nm">0</span>, n_qwords, <span class="nm">2</span>):
+        raw = layer.read(addr + i*<span class="nm">8</span>, <span class="nm">16</span>)
+        <span class="cm"># unpack + print — matches gdb x/32xg exactly</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PLUGIN ===================== -->
+<section id="plugin">
+  <div class="wrap">
+    <div class="sec-mark">STEP · CUSTOM PLUGIN</div>
+    <h2>Automating the whole recovery.</h2>
+    <p class="sec-lede">The final deliverable: a Volatility&nbsp;3 plugin that takes a PID and reconstructs the model — weights, architecture, and forward-pass code — without a human walking pointers by hand.</p>
+
+    <ol class="steps">
+      <li>
+        <h4>Resolve the process &amp; heap</h4>
+        <p><code>_find_process</code> matches the PID via <code>pslist</code>; <code>_build_proc_layer</code> sets up virtual-to-physical translation; <code>_get_heap_ranges</code> scopes the search to the heap VMA found earlier.</p>
+      </li>
+      <li>
+        <h4>Read each TensorImpl</h4>
+        <p><code>_read_tensor_impl</code> unpacks ndim, sizes, and strides from the documented struct offsets, then follows the StorageImpl to the raw <code>DataPtr</code>.</p>
+      </li>
+      <li>
+        <h4>Extract the weights</h4>
+        <p><code>_extract_weights</code> reads <code>n_elems</code> little-endian floats from the data pointer — the actual trained parameters, straight out of RAM.</p>
+      </li>
+      <li>
+        <h4>Recover architecture from strings</h4>
+        <p><code>_extract_architecture</code> scans the heap for ClassType names (<code>conv2d</code>, <code>Linear</code>, <code>BatchNorm</code>, <code>ReLU</code>, <code>MaxPool</code>) and reads each layer's attribute strings.</p>
+      </li>
+      <li>
+        <h4>Recover the forward-pass code</h4>
+        <p><code>_extract_forward_code</code> scans for the TorchScript operators the forward graph invokes — <code>aten::conv2d</code>, <code>aten::relu_</code>, <code>aten::max_pool2d</code>, <code>aten::linear</code> — and locates them in the image.</p>
+      </li>
+    </ol>
+
+    <p>The forward graph itself, extracted from the compiled TorchScript, shows the exact execution order the plugin corroborates:</p>
+
+    <div class="flow">
+graph(<span class="var">%self.1</span> : __torch__.model.CNN, <span class="var">%x.1</span> : Tensor):<br>
+&nbsp;&nbsp;<span class="var">%features.1</span>&nbsp;&nbsp;= <span class="op">prim::GetAttr</span>[name="features"](%self.1)<br>
+&nbsp;&nbsp;<span class="var">%x0.1</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="op">prim::CallMethod</span>[name="forward"](%features.1, %x.1)<br>
+&nbsp;&nbsp;<span class="var">%classifier.1</span> = <span class="op">prim::GetAttr</span>[name="classifier"](%self.1)<br>
+&nbsp;&nbsp;<span class="var">%11</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="op">prim::CallMethod</span>[name="forward"](%classifier.1, %x0.1)<br>
+&nbsp;&nbsp;<span class="arrow">return</span> (%11)
+    </div>
+  </div>
+</section>
+
+<!-- ===================== OUTPUT ===================== -->
+<section id="output">
+  <div class="wrap">
+    <div class="sec-mark">RESULT · 0xOUTPUT</div>
+    <h2>The full model, reconstructed.</h2>
+    <p class="sec-lede">Running the plugin against the image reproduces every layer's shape, strides, data pointer, and element count — plus a live preview of the recovered float weights and the forward-pass operators.</p>
+
+    <div class="otable-scroll">
+    <table class="otable">
+      <thead><tr><th>Layer</th><th>Type</th><th>Shape</th><th>DataPtr</th><th>Elements</th></tr></thead>
+      <tbody>
+        <tr><td>conv2d_1.weight</td><td>Conv2d</td><td>[32, 3, 3, 3]</td><td class="addr">0x5555583e2500</td><td class="val">864</td></tr>
+        <tr><td>conv2d_1.bias</td><td>Conv2d</td><td>[32]</td><td class="addr">0x55555841fcc0</td><td class="val">32</td></tr>
+        <tr><td>conv2d_2.weight</td><td>Conv2d</td><td>[64, 32, 3, 3]</td><td class="addr">0x55555842af40</td><td class="val">18,432</td></tr>
+        <tr><td>conv2d_2.bias</td><td>Conv2d</td><td>[64]</td><td class="addr">0x5555583e5c40</td><td class="val">64</td></tr>
+        <tr><td>conv2d_3.weight</td><td>Conv2d</td><td>[128, 64, 3, 3]</td><td class="addr">0x55555843cf80</td><td class="val">73,728</td></tr>
+        <tr><td>conv2d_3.bias</td><td>Conv2d</td><td>[128]</td><td class="addr">0x5555583ec9c0</td><td class="val">128</td></tr>
+        <tr><td>linear_1.weight</td><td>Linear</td><td>[256, 2048]</td><td class="addr">0x7fffe23ff040</td><td class="val">524,288</td></tr>
+        <tr><td>linear_1.bias</td><td>Linear</td><td>[256]</td><td class="addr">0x5555583e7d00</td><td class="val">256</td></tr>
+        <tr><td>linear_2.weight</td><td>Linear</td><td>[10, 256]</td><td class="addr">0x555558484fc0</td><td class="val">2,560</td></tr>
+        <tr><td>linear_2.bias</td><td>Linear</td><td>[10]</td><td class="addr">0x5555583cc480</td><td class="val">10</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="code">
+      <div class="code-head"><span class="dot live" style="width:9px;height:9px"></span><span class="fname">plugin output · forward pass operators</span></div>
+<pre><span class="fn">prim::GetAttr</span>        0x555555cc6d98
+<span class="fn">prim::CallMethod</span>     0x555555cc7030
+<span class="fn">aten::conv2d</span>         0x555555667360
+<span class="fn">aten::relu_</span>          0x555555c8b8b0
+<span class="fn">aten::max_pool2d</span>     0x5555558e12f0
+<span class="fn">aten::linear</span>         0x55555567af18
+<span class="st">/app/model.py</span>        0x5555583df0b1
+<span class="st">__torch__.model.CNN</span>  0x5555583d1600</pre>
+    </div>
+
+    <p>Weights, architecture, and executable forward-pass code — all three recovered from a single frozen image of memory, and all three verified against the live debugger.</p>
+  </div>
+</section>
+
+<!-- ===================== PITFALLS ===================== -->
+<section id="pitfalls">
+  <div class="wrap">
+    <div class="sec-mark">THE HARD PART</div>
+    <h2>Four ways to make Volatility fail silently.</h2>
+    <p class="sec-lede">The forensics only works when the memory image, the kernel symbols, and the tooling all agree on the same architecture and build. Getting there took several dead ends.</p>
+
+    <div class="pit">
+      <div class="pit-row">
+        <div class="pit-tick">✕</div>
+        <div class="pit-body"><strong>GitHub Codespaces</strong><p>The kernel headers weren't accessible from the container, so the banner string couldn't be read at all.</p></div>
+      </div>
+      <div class="pit-row">
+        <div class="pit-tick">✕</div>
+        <div class="pit-body"><strong>Ubuntu 26.04 VM (UTM)</strong><p>The banner was now readable, but mismatched — the Ubuntu release was too new for a clean symbol match.</p></div>
+      </div>
+      <div class="pit-row">
+        <div class="pit-tick">✕</div>
+        <div class="pit-body"><strong>Ubuntu 24.04 VM (ARM64)</strong><p>Same banner mismatch. Volatility&nbsp;3's Linux plugins don't hold up on ARM64 for this kernel line — pslist returned nothing, kmsg page-faulted, kallsyms crashed.</p></div>
+      </div>
+      <div class="pit-row win">
+        <div class="pit-tick">✓</div>
+        <div class="pit-body"><strong>Emulated x86_64 VM (UTM)</strong><p>Slow under emulation on Apple Silicon, but every standard plugin ran and every address matched. The GDB pass was redone here so the addresses lined up with the new capture.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="brand" style="font-size:15px;margin-bottom:14px"><span class="addr">0x5749</span>/pytorch-memory-forensics</div>
+        <p class="foot-note">Recovering PyTorch models from physical memory<br>via GDB, LiME &amp; a custom Volatility 3 plugin.</p>
+      </div>
+      <div class="foot-links">
+        <a href="https://github.com/504ensicsLabs/LiME">LiME ↗</a>
+        <a href="https://github.com/volatilityfoundation/volatility3">Volatility 3 ↗</a>
+        <a href="https://github.com/pytorch/pytorch/blob/main/c10/core/TensorImpl.h">TensorImpl.h ↗</a>
+        <a href="https://github.com/volatilityfoundation/dwarf2json">dwarf2json ↗</a>
+      </div>
+    </div>
+    <p class="disc">Reference: Ligh, Case, Levy &amp; Walters — <em>The Art of Memory Forensics</em>. Educational security research.</p>
+  </div>
+</footer>
+
+</body>
+</html>
