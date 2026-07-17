@@ -285,7 +285,7 @@
   <div class="wrap">
     <div class="eyebrow">Memory Forensics · Machine Learning</div>
     <h1>Rebuilding a neural network<br><span class="thin">from a raw image of RAM.</span></h1>
-    <p class="lede">Given only a memory dump of a running process — no source, no <code>.pt</code> file — this project recovers a trained PyTorch CNN's <strong>weights</strong>, <strong>layer architecture</strong>, and the <strong>code executed during its forward pass</strong>, then automates the whole recovery in a custom Volatility&nbsp;3 plugin.</p>
+    <p class="lede">Given only a memory dump of a running process without the source and the <code>.pt</code> file, this project recovers a trained PyTorch CNN's <strong>weights</strong>, <strong>layer architecture</strong>, and the <strong>code executed during its forward pass</strong>, then automates the whole recovery in a custom Volatility&nbsp;3 plugin.</p>
 
     <div class="ledger">
       <div class="ledger-head">
@@ -315,7 +315,7 @@
   <div class="wrap">
     <div class="sec-mark">THE PREMISE</div>
     <h2>An attacker with a memory dump can steal the model.</h2>
-    <p class="sec-lede">Most work on model theft assumes query access to an API. This project takes the adversary's other path: physical memory. If a model is running, its full parameters and structure are sitting in RAM — and with the right offsets, they can be read straight out.</p>
+    <p class="sec-lede">Most work on model theft assumes query access to an API. This project takes the adversary's other path: physical memory. If a model is running, its full parameters and structure are sitting in RAM, and with the right offsets, they can be read straight out.</p>
 
     <p>The pipeline runs end to end: train a custom CNN on CIFAR-10, export it to TorchScript, load it in a C++ inference binary compiled with full debug symbols, then pause execution at the forward pass and capture the machine's memory. From that single image, GDB and a custom Volatility&nbsp;3 plugin reconstruct the model layer by layer.</p>
 
@@ -354,7 +354,7 @@
         <span class="kw">return</span> x</pre>
     </div>
 
-    <p>After training, the model is exported to TorchScript with <code>torch.jit.script</code> and loaded by a C++ program that calls <code>module.forward(inputs)</code>. The CMake build sets <code>CMAKE_BUILD_TYPE Debug</code> so every symbol survives into the binary — which is what makes the later memory archaeology possible.</p>
+    <p>After training, the model is exported to TorchScript with <code>torch.jit.script</code> and loaded by a C++ program that calls <code>module.forward(inputs)</code>. The CMake build sets <code>CMAKE_BUILD_TYPE Debug</code> so every symbol survives into the binary, which is what makes the later memory archaeology possible.</p>
   </div>
 </section>
 
@@ -363,9 +363,9 @@
   <div class="wrap">
     <div class="sec-mark">STEP · GDB @ 0x5555584273f0</div>
     <h2>Reading PyTorch's C++ internals by hand.</h2>
-    <p class="sec-lede">With a breakpoint set on the forward-pass line, the process is frozen. From here every object — the input tensor, the module, each layer's weights — is walked through raw memory using field offsets pulled straight from PyTorch's <code>TensorImpl.h</code>.</p>
+    <p class="sec-lede">With a breakpoint set on the forward-pass line, the process is frozen. From here every object, including the input tensor, the module, and each layer's weights, is walked through raw memory using field offsets pulled straight from PyTorch's <code>TensorImpl.h</code>.</p>
 
-    <p><code>gdb info inferior</code> reports the process ID as <strong>5749</strong> — the same PID Volatility recovers later from the memory image, the first confirmation the two views line up.</p>
+    <p><code>gdb info inferior</code> reports the process ID as <strong>5749</strong> which is the same PID Volatility recovers later from the memory image, the first confirmation the two views line up.</p>
 
     <h3>Decoding the input tensor</h3>
     <p>The <code>inputs</code> IValue vector and the raw <code>input</code> tensor share the same <code>impl</code>. Dumping 32 quadwords at the implementation address and mapping them against the struct layout reveals the tensor's shape and strides:</p>
@@ -382,7 +382,7 @@
       </tbody>
     </table>
     </div>
-    <p>Shape <code>[1, 3, 32, 32]</code> — exactly one CIFAR-10 image. The pattern now repeats for every layer.</p>
+    <p>Shape <code>[1, 3, 32, 32]</code> which is exactly one CIFAR-10 image. The pattern now repeats for every layer.</p>
 
     <h3>Walking the module's slots</h3>
     <p>Printing <code>model._ivalue_.target_->slots_</code> yields four slots: a training flag, <code>None</code>, then <code>self.features</code> at <code>0x5555583ef4d0</code> and <code>self.classifier</code> at <code>0x5555584237b0</code>. Descending into <code>features</code> exposes the individual layers; the first <code>Conv2d</code> sits at <code>0x5555583da440</code>, with its weight tensor as slot 0 and bias as slot 1.</p>
@@ -398,11 +398,11 @@
       </div>
     </div>
 
-    <p>The layer's attribute strings — <code>stride</code>, <code>padding</code>, <code>dilation</code>, <code>padding_mode</code> — are recovered the same way, decoded byte-for-byte from the ClassType object. The Linear layers follow identically: <code>linear_1.weight</code> resolves to shape <code>[256, 2048]</code>, and following its StorageImpl's <code>DataPtr</code> to <code>0x7fffe23ff040</code> lands on 2,097,152 bytes of trained float data — the correct size for a [256, 2048] tensor.</p>
+    <p>The layer's attribute strings (<code>stride</code>, <code>padding</code>, <code>dilation</code> <code>padding_mode</code>) are recovered the same way, decoded byte-for-byte from the ClassType object. The Linear layers follow identically: <code>linear_1.weight</code> resolves to shape <code>[256, 2048]</code>, and following its StorageImpl's <code>DataPtr</code> to <code>0x7fffe23ff040</code> lands on 2,097,152 bytes of trained float data — the correct size for a [256, 2048] tensor.</p>
 
     <div class="note">
       <span class="tag">Key detail</span>
-      <p>The addresses had to be gathered twice. Moving between VMs relocated everything, so the entire GDB pass was repeated on the final x86_64 machine — the addresses on this page are the ones that match the captured image.</p>
+      <p>The addresses had to be gathered twice. Moving between VMs relocated everything, so the entire GDB pass was repeated on the final x86_64 machine. The addresses on this page are the ones that match the captured image.</p>
     </div>
   </div>
 </section>
@@ -426,7 +426,7 @@ sudo ./dwarf2json linux \
   &gt; ubuntu-<span class="st">$(uname -r)</span>.json</pre>
     </div>
 
-    <p>The symbol table has to match the kernel <em>build</em>, not just its version — a mismatched architecture banner makes Volatility fail silently, which turned into the project's single biggest time sink (see the pitfalls below).</p>
+    <p>The symbol table has to match the kernel <em>build</em>, not just its version. A mismatched architecture banner makes Volatility fail silently.</p>
   </div>
 </section>
 
@@ -439,13 +439,13 @@ sudo ./dwarf2json linux \
 
     <div class="verify">
       <span class="badge">PID MATCH</span>
-      <p><code>linux.pslist</code> finds process <strong>5749 · infer</strong> in the image — the exact PID GDB reported before the capture.</p>
+      <p><code>linux.pslist</code> finds process <strong>5749 · infer</strong> in the image which is the exact PID GDB reported before the capture.</p>
     </div>
 
-    <p><code>linux.proc.Maps --pid 5749</code> lays out the process's virtual memory areas. The heap spans <code>0x555555585000 – 0x5555584a5000</code> — roughly 47&nbsp;MB where most of the live model tensors reside — while <code>libtorch_cpu.so</code> occupies a ~1.4&nbsp;GB range of executable code.</p>
+    <p><code>linux.proc.Maps --pid 5749</code> lays out the process's virtual memory areas. The heap spans <code>0x555555585000 – 0x5555584a5000</code> (roughly 47&nbsp;MB where most of the live model tensors reside) while <code>libtorch_cpu.so</code> occupies a ~1.4&nbsp;GB range of executable code.</p>
 
     <h3>Byte-for-byte verification in volshell</h3>
-    <p>After switching the current layer to process 5749, a small dump helper reads memory at the GDB addresses. Every value matches. The input tensor at <code>0x5555583edd70</code>, the module at <code>0x5555584273f0</code>, the conv2d weight tensor, the "conv2d" and "Linear" ClassType strings, the linear-layer float weights — all identical across the live debugger and the frozen image.</p>
+    <p>After switching the current layer to process 5749, a small dump helper reads memory at the GDB addresses. Every value matches. The input tensor at <code>0x5555583edd70</code>, the module at <code>0x5555584273f0</code>, the conv2d weight tensor, the "conv2d" and "Linear" ClassType strings, the linear-layer float weights. They were all identical across the live debugger and the frozen image.</p>
 
     <div class="code">
       <div class="code-head"><span class="dot" style="width:9px;height:9px"></span><span class="fname">volshell</span></div>
@@ -464,7 +464,7 @@ sudo ./dwarf2json linux \
   <div class="wrap">
     <div class="sec-mark">STEP · CUSTOM PLUGIN</div>
     <h2>Automating the whole recovery.</h2>
-    <p class="sec-lede">The final deliverable: a Volatility&nbsp;3 plugin that takes a PID and reconstructs the model — weights, architecture, and forward-pass code — without a human walking pointers by hand.</p>
+    <p class="sec-lede">The final deliverable: a Volatility&nbsp;3 plugin that takes a PID and reconstructs the model weights, architecture, and forward-pass code without a human walking pointers by hand.</p>
 
     <ol class="steps">
       <li>
@@ -485,7 +485,7 @@ sudo ./dwarf2json linux \
       </li>
       <li>
         <h4>Recover the forward-pass code</h4>
-        <p><code>_extract_forward_code</code> scans for the TorchScript operators the forward graph invokes — <code>aten::conv2d</code>, <code>aten::relu_</code>, <code>aten::max_pool2d</code>, <code>aten::linear</code> — and locates them in the image.</p>
+        <p><code>_extract_forward_code</code> scans for the TorchScript operators the forward graph invokes (<code>aten::conv2d</code>, <code>aten::relu_</code>, <code>aten::max_pool2d</code>, <code>aten::linear</code>) and locates them in the image.</p>
       </li>
     </ol>
 
@@ -507,7 +507,7 @@ graph(<span class="var">%self.1</span> : __torch__.model.CNN, <span class="var">
   <div class="wrap">
     <div class="sec-mark">RESULT · 0xOUTPUT</div>
     <h2>The full model, reconstructed.</h2>
-    <p class="sec-lede">Running the plugin against the image reproduces every layer's shape, strides, data pointer, and element count — plus a live preview of the recovered float weights and the forward-pass operators.</p>
+    <p class="sec-lede">Running the plugin against the image reproduces every layer's shape, strides, data pointer, and element count. It also reproduces a live preview of the recovered float weights and the forward-pass operators.</p>
 
     <div class="otable-scroll">
     <table class="otable">
@@ -539,7 +539,7 @@ graph(<span class="var">%self.1</span> : __torch__.model.CNN, <span class="var">
 <span class="st">__torch__.model.CNN</span>  0x5555583d1600</pre>
     </div>
 
-    <p>Weights, architecture, and executable forward-pass code — all three recovered from a single frozen image of memory, and all three verified against the live debugger.</p>
+    <p>Weights, architecture, and executable forward-pass code. All three recovered from a single frozen image of memory, and all three verified against the live debugger.</p>
   </div>
 </section>
 
@@ -557,11 +557,11 @@ graph(<span class="var">%self.1</span> : __torch__.model.CNN, <span class="var">
       </div>
       <div class="pit-row">
         <div class="pit-tick">✕</div>
-        <div class="pit-body"><strong>Ubuntu 26.04 VM (UTM)</strong><p>The banner was now readable, but mismatched — the Ubuntu release was too new for a clean symbol match.</p></div>
+        <div class="pit-body"><strong>Ubuntu 26.04 VM (UTM)</strong><p>The banner was now readable, but mismatched. The Ubuntu release was too new for a clean symbol match.</p></div>
       </div>
       <div class="pit-row">
         <div class="pit-tick">✕</div>
-        <div class="pit-body"><strong>Ubuntu 24.04 VM (ARM64)</strong><p>Same banner mismatch. Volatility&nbsp;3's Linux plugins don't hold up on ARM64 for this kernel line — pslist returned nothing, kmsg page-faulted, kallsyms crashed.</p></div>
+        <div class="pit-body"><strong>Ubuntu 24.04 VM (ARM64)</strong><p>Same banner mismatch. Volatility&nbsp;3's Linux plugins don't hold up on ARM64 for this kernel line. pslist returned nothing, kmsg page-faulted, kallsyms crashed.</p></div>
       </div>
       <div class="pit-row win">
         <div class="pit-tick">✓</div>
