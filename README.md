@@ -45,7 +45,7 @@ pytorch-memory-forensics/
 │   ├── cnn_model.pt                    # PyTorch saved model weights
 │   └── cnn_model_torchscript.pt        # TorchScript model used by the C++ binary
 ├── custom_volatility_plugin/
-│   ├── torch_model_extractor_plugin.py # Volatility 3 plugin: recovers weights, architecture, forward pass
+│   ├── torch_model_extractor_plugin.py # Custom Volatility 3 plugin: recovers weights, architecture, forward pass
 │   └── custom_plugin_output.txt        # Output of running the custom Volatility plugin
 ├── docs/
 │   └── index.html                      # Full project write-up with findings and screenshots
