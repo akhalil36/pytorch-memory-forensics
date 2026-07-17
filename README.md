@@ -4,7 +4,7 @@ A deep-dive into runtime memory forensics of a PyTorch convolutional neural netw
 
 **[→ Full write-up, findings, and analysis on the GitHub Pages site](https://akhalil36.github.io/pytorch-memory-forensics/)**
 
-**Extremely detailed technical writeup with step-by-step descriptions and screenshots of the process are in Detailed Writeup.pdf.**
+**Extremely detailed technical writeup with step-by-step descriptions and screenshots of the process are in Detailed Writeup.pdf**
 
 ---
 
