@@ -3,11 +3,12 @@
 A deep-dive into runtime memory forensics of a PyTorch convolutional neural network. This project combines systems programming, machine learning, and memory forensics to extract a neural network's weights, architecture, and forward pass code directly from a raw memory image without access to the original source code or model file.
 
 **[→ Full write-up, findings, and analysis on the GitHub Pages site](https://akhalil36.github.io/pytorch-memory-forensics/)**
+
 **Extremely detailed technical writeup with step-by-step descriptions and screenshots of the process are in Detailed Writeup.pdf.**
 
 ---
 
-## What This Project Does
+## Project Purpose
 
 This project **extracts a trained neural network directly from physical memory** using low-level forensics tools. Given only a memory dump of a running process, this project recovers:
 
@@ -50,7 +51,7 @@ pytorch-memory-forensics/
 │   └── custom_plugin_output.txt        # Output of running the custom Volatility plugin
 ├── docs/
 │   └── index.html                      # Full project write-up with findings and screenshots
-├── Detailed Writeup.pdf                   # Detailed step-by-step narration (including screenshots) of the process
+├── Detailed Writeup.pdf                # Detailed step-by-step narration (including screenshots)
 ├── env.yml                             # Conda environment with PyTorch dependencies
 └── setup.sh                            # Downloads LibTorch (CPU) and the CIFAR-10 dataset
 ```
